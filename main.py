@@ -5,7 +5,7 @@ import math
 import sys
 from pygame.locals import *
 import time
-import game_render
+import game_controller
 import event
 
 game_clock = pygame.time.Clock()
@@ -21,9 +21,7 @@ font = pygame.font.SysFont(None, 36)
 
 game_run = True
 
-def renderText(display, font, surface, x, y):
-    text = font.render(display, 1, (0, 0, 0))
-    surface.blit(text, (x, y))
+game_controller.init()
 
 def msTime():
     return int(time.time() * 1000)
@@ -31,11 +29,19 @@ def msTime():
 def draw():
     game_clock.tick(config.game_sync_framerate)
     screen.fill((0, 0, 0))
-    game_render.emit()
+    game_controller.emitUpdateObjects(delta_time)
+    game_controller.emit(screen)
     pygame.display.update()
 
 def checkEvents():
-    event.emit(pygame.event.get())
+    for event in events:
+        if event.type == QUIT:
+            game_run = False
+            pygame.quit()
+            sys.exit()
+        if event.type == pygame.KEYDOWN:
+            if event.key == pygame.K_SPACE:
+                game_controller.emitSpaceBar()
 
 while game_run:
     startRender = msTime()

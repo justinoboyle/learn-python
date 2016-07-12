@@ -5,8 +5,10 @@ import math
 import sys
 from pygame.locals import *
 import time
-import game_controller
+from game_controller import Controller
 import event
+
+controllerObj = Controller()
 
 game_clock = pygame.time.Clock()
 
@@ -17,11 +19,9 @@ screen = pygame.display.set_mode((config.game_width, config.game_height))
 
 pygame.key.set_repeat(100, 50)
 
-font = pygame.font.SysFont(None, 36)
-
 game_run = True
 
-game_controller.init()
+font = pygame.font.SysFont(None, 36)
 
 def msTime():
     return int(time.time() * 1000)
@@ -29,11 +29,11 @@ def msTime():
 def draw():
     game_clock.tick(config.game_sync_framerate)
     screen.fill((0, 0, 0))
-    game_controller.emitUpdateObjects(delta_time)
-    game_controller.emit(screen)
+    # controllerObj.emitUpdateObjects(delta_time)
+    controllerObj.emit(screen)
     pygame.display.update()
 
-def checkEvents():
+def checkEvents(events):
     for event in events:
         if event.type == QUIT:
             game_run = False
@@ -41,11 +41,13 @@ def checkEvents():
             sys.exit()
         if event.type == pygame.KEYDOWN:
             if event.key == pygame.K_SPACE:
-                game_controller.emitSpaceBar()
+                controllerObj.emitSpaceBar()
+
+controllerObj.init(screen)
 
 while game_run:
     startRender = msTime()
-    checkEvents()
+    checkEvents(pygame.event.get())
     draw()
     DELTA_TIME = 1.0 - (1 / (msTime() - startRender))
 

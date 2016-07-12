@@ -1,54 +1,27 @@
 import pygame
 import config
+from CentipedeComponent import CentipedeComponent
+from Centipede import Centipede
+class Controller():
+    centipedes = []
 
-hoop_image = None
-arrow_image = None
-ball_image = None
+    background = None
 
-hoopDim = int(config.game_width / 5)
-hoopMod = 0
-hoopMax = config.game_width - hoopDim
-hoopDir = 1
+    collideWith = pygame.sprite.Group()
 
-arrowDim = int(config.game_width / 10)
+    bullets = pygame.sprite.Group()
 
-ballDim = int(config.game_height / 15)
-ballStartHeight = arrowDim
-ballLaunched = False
-ballHeight = ballStartHeight
+    def init(self, screen):
+        global background, centipede
+        self.background = pygame.Surface((640, 460), 0, screen)
+        self.background.fill((0, 0, 0))
+        screen.blit(self.background, (0, 0))
+        self.centipedes.append(Centipede(self))
+        self.centipedes.append(self.centipedes[0].split(5))
 
-def init():
-    global hoop_image, arrow_image, ball_image
-
-    hoop_image = pygame.image.load('res/images/hoop.png').convert_alpha()
-    hoop_image = pygame.transform.scale(hoop_image, (hoopDim, hoopDim))
-
-    arrow_image = pygame.image.load('res/images/arrow.png').convert_alpha()
-    arrow_image = pygame.transform.scale(arrow_image, (arrowDim, arrowDim))
-
-    ball_image = pygame.image.load('res/images/ball.png').convert_alpha()
-    ball_image = pygame.transform.scale(ball_image, (ballDim, ballDim))
-
-def emit(screen):
-    updateBall()
-    screen.blit(hoop_image, (hoopMod, config.game_height - hoopDim))
-    screen.blit(arrow_image, ((config.game_width / 2) - arrowDim, 0))
-    if ballLaunched:
-        screen.blit(ball_image, (((config.game_width / 2) - arrowDim) + (ballDim / 2), ballStartHeight))
-
-def updateBall(deltaTime):
-    if not ballLaunched:
-        return
-
-#def emitUpdateObjects(delta_time):
-#TODO
-
-def emitSpaceBar():
-    if ballLaunched:
-        return
-    ballHeight = ballStartHeight
-    ballLaunched = True
-
-def renderText(display, font, surface, x, y):
-    text = font.render(display, 1, (0, 0, 0))
-    surface.blit(text, (x, y))
+    def emit(self, screen):
+        count = 0
+        for centipede in self.centipedes:
+            print()
+            centipede.update(screen, self.background, self.collideWith, self.bullets)
+Controller()

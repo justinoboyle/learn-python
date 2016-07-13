@@ -6,3 +6,4 @@ class Direction(Enum):
     down = "down"
     left = "left"
     none = "none"
+    automatic = "automatic"

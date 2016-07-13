@@ -7,6 +7,12 @@ from pygame.locals import *
 import time
 from game_controller import Controller
 import event
+import os
+
+x = 50
+y = 50
+
+os.environ['SDL_VIDEO_WINDOW_POS'] = "%d,%d" % (x, y)
 
 controllerObj = Controller()
 

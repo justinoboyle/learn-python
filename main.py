@@ -4,7 +4,7 @@ import random
 import math
 import sys
 from pygame.locals import *
-import time
+import timex
 from game_controller import Controller
 import event
 import os

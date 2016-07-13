@@ -48,6 +48,7 @@ class Centipede():
             x.direction = backwards(x.direction)
             x.updateDirection()
         self.controller.centipedes.append(temp)
+        print("Break")
 
 
     def initPos(self):

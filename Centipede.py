@@ -37,36 +37,33 @@ class Centipede():
         self.updatePos(collideWith, bullets)
         self.centipede_group.draw(screen)
 
-    def divide(self, at):
-        origLen = len(self.centipede_group)
-        if at < len(self.centipede_group) + 1:
-            at += 1
+    def divide(self, at):  
         try:
+            origLen = len(self.centipede_group)
+            if origLen == 0:
+                return
             atX = self.centipede_group.sprites()[at].rect.x
             atY = self.centipede_group.sprites()[at].rect.y
-        except:
-            try:
-                at -= 1
-                atX = self.centipede_group.sprites()[max(0, at - 1)].rect.x
-                atY = self.centipede_group.sprites()[max(0, at - 1)].rect.y
-            except:
-                return
-        rem = 0
-        newG = pygame.sprite.Group()
-        while len(self.centipede_group) >= at and len(self.centipede_group) >= 1:
-            obj = self.centipede_group.sprites()[len(self.centipede_group.sprites()) - 1]
-            rem += 1
-            newG.add(obj)
-            self.centipede_group.remove(obj)
-        if len(self.centipede_group) <= 1:
-            try:
+            rem = 0
+            newG = pygame.sprite.Group()
+            while len(self.centipede_group) >= at and len(self.centipede_group) >= 1:
+                obj = self.centipede_group.sprites()[len(self.centipede_group.sprites()) - 1]
+                rem += 1
+                if rem != 0:
+                    newG.add(obj)
+                self.centipede_group.remove(obj)
+            if len(self.centipede_group) <= 1:
                 self.controller.centipedes.remove(self)
-            except: pass
-        temp = Centipede(self.controller, 0, -1, -1, self.moveAmount, newG)
-        for x in temp.centipede_group:
-            x.direction = backwards(x.direction)
-            x.updateDirection()
-        self.controller.centipedes.append(temp)
+            if len(newG) <= 2:
+                return
+            temp = Centipede(self.controller, 0, -1, -1, self.moveAmount, newG)
+            for x in temp.centipede_group:
+                x.parent = temp
+                x.direction = backwards(x.direction)
+                x.updateDirection()
+            self.controller.centipedes.append(temp)
+        except Exception as e:
+            print(e.message)
 
 
     def initPos(self):

@@ -52,15 +52,14 @@ def checkEvents(events):
 controllerObj.init(screen)
 
 while game_run:
-    # try:
+    try:
         startRender = msTime()
         checkEvents(pygame.event.get())
         draw()
         DELTA_TIME = 1.0 - (1 / (msTime() - startRender))
-    # except Exception as e:
-    #     print("Tried to draw frame but couldn't!")
-    #     print(e.__doc__)
-        # print(e.message)
+    except Exception as e:
+        print("Tried to draw frame but couldn't!")
+        print(e.message)
 
 pygame.quit()
 sys.exit()

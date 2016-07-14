@@ -7,6 +7,7 @@ import time
 import random
 from Player import Player
 from Bullet import Bullet
+from EnemyFall import EnemyFall
 
 class Controller():
 
@@ -14,11 +15,14 @@ class Controller():
     score = 0
 
     def init(self, screen):
-
+        pygame.display.set_caption("Centipede")
+        self.difficulty = 1
+        self.difficultyTimer = pygame.time.get_ticks()
         self.centipedes = []
         self.background = None
         self.collideWith = pygame.sprite.Group()
         self.mushroom_group = pygame.sprite.Group()
+        self.enemies = pygame.sprite.Group()
         self.bullets = pygame.sprite.Group()
         self.players = pygame.sprite.Group()
         self.split = False
@@ -45,34 +49,64 @@ class Controller():
         self.bullets.add(Bullet(self.players.sprites()[0].rect.x, self.players.sprites()[0].rect.y))
 
     def emit(self, screen):
+
         if self.lives <= 0:
             screen.blit(self.largefont.render("You died! Press space to replay.", 1, (255, 255, 255)), (config.game_width / 2 - 190, config.game_height / 2 - 8))
             screen.blit(self.largefont.render("Score: " + str(self.score), 1, (255, 255, 255)), (config.game_width / 2 - 190, config.game_height / 2 + 8))
             return
-        #do this
-        self.mushroom_group.draw(screen)
-        for player in self.players:
-            player.update()
-        for bullet in self.bullets:
-            bullet.update()
+
+        if random.randint(0, 1000 - (self.difficulty * 10)) < 5:
+            self.enemies.add(EnemyFall())
+
+        if pygame.time.get_ticks() - self.difficultyTimer >= 5 * 1000:
+            self.difficulty += 1
+            self.difficultyTimer = pygame.time.get_ticks()
+        
+        
+
         self.players.draw(screen)
         self.bullets.draw(screen)
+        self.mushroom_group.draw(screen)
+        self.enemies.draw(screen)
         count = 0
-        # render text
+
         screen.blit(self.myfont.render("Lives:", 1, (255, 255, 255)), (60, 10))
         screen.blit(self.myfont.render(str(self.lives), 1, (255, 255, 255)), (60, 20))
         screen.blit(self.myfont.render("Score:", 1, (255, 255, 255)), (config.game_width - 120, 10))
         screen.blit(self.myfont.render(str(self.score), 1, (255, 255, 255)), (config.game_width - 120, 20))
 
+        for player in self.players:
+            if player.update(self.enemies):
+                self.lives -= 1
+                score = self.score
+                self.init(screen)
+                self.score = score
+                return
+
+        if len(self.centipedes) <= 0:
+            self.centipedes.append(Centipede(self))
+
+        for bullet in self.bullets:
+            if bullet.rect.y < 0:
+                self.bullets.remove(bullet)
+            else:
+                bullet.update()
+
+        for enemy in self.enemies:
+            if enemy.rect.y > config.game_height:
+                self.enemies.remove(enemy)
+            else:
+                enemy.update()
+
         for centipede in self.centipedes:
-            # if not self.split and (pygame.time.get_ticks() - self.time) > 1000 * 5:
-            #     self.centipedes.append(self.centipedes[0].divide(5))
-            #     self.split = True 
             for part in centipede.centipede_group:
                 if part.rect.y > config.game_height - 120:
                     self.lives -= 1
+                    score = self.score
                     self.init(screen)
+                    self.score = score
                     return
             centipede.update(screen, self.background, self.mushroom_group, self.bullets)
             count += 1
+
 Controller()

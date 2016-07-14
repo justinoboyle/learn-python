@@ -4,7 +4,7 @@ import random
 import math
 import sys
 from pygame.locals import *
-import timex
+import time
 from game_controller import Controller
 import event
 import os
@@ -23,7 +23,7 @@ delta_time = 1
 pygame.init()
 screen = pygame.display.set_mode((config.game_width, config.game_height))
 
-pygame.key.set_repeat(100, 50)
+pygame.key.set_repeat(100, 200)
 
 game_run = True
 
@@ -52,10 +52,15 @@ def checkEvents(events):
 controllerObj.init(screen)
 
 while game_run:
-    startRender = msTime()
-    checkEvents(pygame.event.get())
-    draw()
-    DELTA_TIME = 1.0 - (1 / (msTime() - startRender))
+    # try:
+        startRender = msTime()
+        checkEvents(pygame.event.get())
+        draw()
+        DELTA_TIME = 1.0 - (1 / (msTime() - startRender))
+    # except Exception as e:
+    #     print("Tried to draw frame but couldn't!")
+    #     print(e.__doc__)
+        # print(e.message)
 
 pygame.quit()
 sys.exit()

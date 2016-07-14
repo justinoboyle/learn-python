@@ -25,7 +25,7 @@ class CentipedeComponent(pygame.sprite.Sprite):
         self.updateDirection()
 
         self.parent = parentObj
-        self.setCurrentImage("body_up")
+        self.setCurrentImage("none")
         self.rect = self.image.get_rect(center=(self.getDim(), self.getDim()))
         
     def getActiveImage(self):
@@ -37,38 +37,39 @@ class CentipedeComponent(pygame.sprite.Sprite):
         currentImage = "res/images/cent/" + image + ".png"
         self.image = pygame.image.load(currentImage).convert_alpha()
 
-    def collide(self, collideWith, bullets, selfX, selfY, index):
+    def collide(self, collideWith, bullets, selfX, selfY, index, checkDirection):
 
         bull = pygame.sprite.spritecollide(self, bullets, True)
         if len(bull) > 0:
             self.parent.divide(index)
             self.parent.controller.score += 10
             return swapDirection(self.direction, self.lasthor)
+        if checkDirection:
+            if selfY <= 0 and self.direction != swapDirection(Direction.up, self.lasthor):
+                return swapDirection(Direction.up, self.lasthor)
+            if selfX <= 0 and self.direction != swapDirection(Direction.left, self.lasthor):
+                return swapDirection(Direction.left, self.lasthor)
+            if (selfY + self.getDim()) >= config.game_height and self.direction != swapDirection(Direction.down, self.lasthor):
+                return swapDirection(Direction.right, self.lasthor)
+            if (selfX + self.getDim()) >= config.game_width and self.direction != swapDirection(Direction.right, self.lasthor):
+                return swapDirection(Direction.right, self.lasthor)
+            coll = pygame.sprite.spritecollide(self, collideWith, False)
+            if len(coll) > 0:
+                for x in coll:
+                    rect = x.image.get_rect()
+                    if rect.x > self.rect.x:
+                        return swapDirection(Direction.left, self.lasthor)
+                    if rect.x < self.rect.x:
+                        return swapDirection(Direction.right, self.lasthor)
+                    if rect.y < self.rect.y:
+                        return swapDirection(Direction.right, self.lasthor)
 
-        if selfY <= 0 and self.direction != swapDirection(Direction.up, self.lasthor):
-            return swapDirection(Direction.up, self.lasthor)
-        if selfX <= 0 and self.direction != swapDirection(Direction.left, self.lasthor):
-            return swapDirection(Direction.left, self.lasthor)
-        if (selfY + self.getDim()) >= config.game_height and self.direction != swapDirection(Direction.down, self.lasthor):
-            return swapDirection(Direction.right, self.lasthor)
-        if (selfX + self.getDim()) >= config.game_width and self.direction != swapDirection(Direction.right, self.lasthor):
-            return swapDirection(Direction.right, self.lasthor)
-        coll = pygame.sprite.spritecollide(self, collideWith, False)
-        if len(coll) > 0:
-            for x in coll:
-                rect = x.image.get_rect()
-                if rect.x > self.rect.x:
-                    return swapDirection(Direction.left, self.lasthor)
-                if rect.x < self.rect.x:
-                    return swapDirection(Direction.right, self.lasthor)
-                if rect.y < self.rect.y:
-                    return swapDirection(Direction.right, self.lasthor)
-
-            return swapDirection(Direction.up, self.lasthor)
+                return swapDirection(Direction.up, self.lasthor)
         return Direction.none
 
-    def move(self, headX, headY, isHead, amount, collideWith, bullets, index, headIndex, centipede_group):
-        head = centipede_group.sprites()[headIndex]
+    def move(self, headX, headY, amount, collideWith, bullets, index, centipede_group):
+        isHead = (index == len(centipede_group) - 1)
+        self.setCurrentImage("head" + "_" + self.direction.value)
         if self.rotateAgain != -1:
             if pygame.time.get_ticks() - self.rotateTimer >= self.rotateAgain:
                 self.direction = swapDirection(self.direction, self.lasthor)
@@ -82,19 +83,28 @@ class CentipedeComponent(pygame.sprite.Sprite):
         elif self.direction == Direction.down: self.rect.y += amount
         elif self.direction == Direction.left: self.rect.x -= amount
 
-        collide = self.collide(collideWith, bullets, self.rect.x, self.rect.y, index)
+        collide = self.collide(collideWith, bullets, self.rect.x, self.rect.y, index, True)
         if collide != Direction.none:
             self.direction = collide
             self.updateDirection()
             self.rotateAgain = 250
             self.rotateTimer = pygame.time.get_ticks()
 
-        self.setCurrentImage(("head" if isHead else "body") + "_" + self.direction.value)
+       
     def distanceTo(self, other):
         return pow(pow(other.rect.x - self.rect.x, 2) + pow(other.rect.y - self.rect.y, 2), 0.5)
 
     def getDim(self):
         return 20 # TODO make this dynamic
+
+    def updateTick(self, x, y, collideWith, bullets, index, rotation, centipede_group):
+        isHead = (index == len(centipede_group) - 1)
+        self.collide(collideWith, bullets, self.rect.x, self.rect.y, index, False)
+        self.rect.x = x
+        self.rect.y = y
+        self.direction = rotation
+        self.setCurrentImage(("head" if isHead else "body") + "_" + self.direction.value)
+
 
     def updateDirection(self):
         if self.direction == Direction.right or self.direction == Direction.left:

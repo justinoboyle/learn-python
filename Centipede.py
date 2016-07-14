@@ -2,6 +2,8 @@ import pygame
 import config
 from CentipedeComponent import CentipedeComponent
 from Direction import Direction
+from threading import Timer
+from PendingMovement import PendingMovement
 
 def backwards(dir):
     if dir == Direction.up: return Direction.down
@@ -11,13 +13,15 @@ def backwards(dir):
 
 class Centipede():
 
-    def __init__(self, controller, initAmount = 10, initX = 20 + (5 * 10), initY = 20, initMove = 0):
+    def __init__(self, controller, initAmount = 10, initX = 20 + (5 * 10), initY = 20, initMove = 0, newG = pygame.sprite.Group()):
 
-        self.centipede_group = pygame.sprite.Group()
+        self.centipede_group = newG
         self.moveAmount = initMove
         self.facingRight = True
-        self.speed = 1
+        self.speed = 2
         self.controller = None
+
+        self.pendingMovements = []
 
         print("initAmount: " + str(initAmount))
         self.controller = controller
@@ -26,29 +30,43 @@ class Centipede():
         if initAmount > 0:
             for x in range(0, initAmount):
                 self.centipede_group.add(CentipedeComponent(self))
-            self.initPos()
+            if initX > 0:
+           	    self.initPos()
 
     def update(self, screen, background, collideWith, bullets):
         self.updatePos(collideWith, bullets)
         self.centipede_group.draw(screen)
 
     def divide(self, at):
-        atX = self.centipede_group.sprites()[at].rect.x
-        atY = self.centipede_group.sprites()[at].rect.y
-        amount = at
-        for x in range(at, len(self.centipede_group.sprites())):
-            obj = self.centipede_group.sprites()[x]
-            self.centipede_group.sprites().remove(obj)
-        if len(self.centipede_group) < 2:
-            self.controller.centipedes.remove(self)
-        if amount < 2:
-            return None
-        temp = Centipede(self.controller, amount, atX, atY, self.moveAmount)
+        origLen = len(self.centipede_group)
+        if at < len(self.centipede_group) + 1:
+            at += 1
+        try:
+            atX = self.centipede_group.sprites()[at].rect.x
+            atY = self.centipede_group.sprites()[at].rect.y
+        except:
+            try:
+                at -= 1
+                atX = self.centipede_group.sprites()[max(0, at - 1)].rect.x
+                atY = self.centipede_group.sprites()[max(0, at - 1)].rect.y
+            except:
+                return
+        rem = 0
+        newG = pygame.sprite.Group()
+        while len(self.centipede_group) >= at and len(self.centipede_group) >= 1:
+            obj = self.centipede_group.sprites()[len(self.centipede_group.sprites()) - 1]
+            rem += 1
+            newG.add(obj)
+            self.centipede_group.remove(obj)
+        if len(self.centipede_group) <= 1:
+            try:
+                self.controller.centipedes.remove(self)
+            except: pass
+        temp = Centipede(self.controller, 0, -1, -1, self.moveAmount, newG)
         for x in temp.centipede_group:
             x.direction = backwards(x.direction)
             x.updateDirection()
         self.controller.centipedes.append(temp)
-        print("Break")
 
 
     def initPos(self):
@@ -60,6 +78,15 @@ class Centipede():
 
     def updatePos(self, collideWith, bullets):
         count = 0
-        for trail in self.centipede_group:
-            trail.move(self.headX, self.headY, count == len(self.centipede_group) -1, 2, collideWith, bullets, count, len(self.centipede_group) - 1, self.centipede_group)
-            count += 1
+        direction = None
+        newX = 0
+        newY = 0
+        trail = self.centipede_group.sprites()[len(self.centipede_group.sprites()) - 1]
+        trail.move(self.headX, self.headY, self.speed, collideWith, bullets, count, self.centipede_group)
+        direction = trail.direction
+        newX = trail.rect.x
+        newY = trail.rect.y
+        self.pendingMovements.append(PendingMovement((7 / 2) * self.speed, self.centipede_group, newX, newY, collideWith, bullets, trail.direction))
+        for m in self.pendingMovements:
+            if m.tick():
+                self.pendingMovements.remove(m)
